@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Compatible with OpenZeppelin Contracts ^5.4.0
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.20;
 // erc721 的基础函数
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721Burnable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
@@ -10,20 +10,21 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MyToken is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnable, Ownable {
     uint256 private _nextTokenId;
+    string constant public METADATA_URI = "ipfs://QmXw7TEAJWKjKifvLE25Z9yjvowWk2NWY3WgnZPUto9XoA";
 
-    constructor(address initialOwner)
-        ERC721("MyToken", "MTK")
-        Ownable(initialOwner)
+    constructor(string memory tokenName,string memory tokenSymbol)
+        ERC721(tokenName, tokenSymbol)
+        Ownable(msg.sender)
     {}
 
-    function safeMint(address to, string memory uri)
+    function safeMint(address to)
         public
         onlyOwner
         returns (uint256)
     {
         uint256 tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
-        _setTokenURI(tokenId, uri);
+        _setTokenURI(tokenId, METADATA_URI);
         return tokenId;
     }
 
