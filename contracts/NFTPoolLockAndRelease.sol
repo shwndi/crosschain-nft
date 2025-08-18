@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.19;
 
 import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol";
@@ -111,7 +111,7 @@ contract NFTPoolLockAndRelease is CCIPReceiver, OwnerIsCreator {
         uint64 _destinationChainSelector,
         address _receiver,
         bytes memory _text
-    ) internal returns (bytes32 messageId) {
+    ) public returns (bytes32 messageId) {
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
             _receiver,
@@ -153,13 +153,16 @@ contract NFTPoolLockAndRelease is CCIPReceiver, OwnerIsCreator {
         Client.Any2EVMMessage memory any2EvmMessage
     ) internal override {
         // address newOwner, uint256 tokenId
-        RequestData memory requestData = abi.decode(
-            any2EvmMessage.data,
-            (RequestData)
-        );
-        uint256 tokenId = requestData.tokenId; // fetch the tokenId
-        address newOwner = requestData.newOwner; // fetch the newOwner
-
+        // RequestData memory requestData = abi.decode(
+        //     any2EvmMessage.data,
+        //     (RequestData)
+        // );
+        // uint256 tokenId = requestData.tokenId; // fetch the tokenId
+        // address newOwner = requestData.newOwner; // fetch the newOwner
+   (uint256 tokenId, address newOwner) = abi.decode(
+        any2EvmMessage.data, 
+        (uint256, address)
+    );
         //    check if the token is locked
         // require(TokenLocked[tokenId], "Token is not locked");
         nft.transferFrom(address(this),newOwner,tokenId);

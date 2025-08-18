@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.19;
 
 import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol";
@@ -39,18 +39,15 @@ contract NFTPoolBurnAndMint is CCIPReceiver, OwnerIsCreator {
     );
 
     // Event emitted when a message is received from another chain.
-    event TokenMinted(
-        uint256 tokenId,
-        address newOwner
-    );
+    event TokenMinted(uint256 tokenId, address newOwner);
 
     bytes32 private s_lastReceivedMessageId; // Store the last received messageId.
     string private s_lastReceivedText; // Store the last received text.
 
     IERC20 private s_linkToken;
     WrappedMyToken public wnft;
-
-    struct RequestData{
+    // 如果发送方和接收方的 RequestData 结构体定义不一致（例如字段顺序不同），也会导致解码失败。
+    struct RequestData {
         address newOwner; // The new owner of the NFT.
         uint256 tokenId; // The ID of the NFT to be burned and minted.
     }
@@ -58,11 +55,14 @@ contract NFTPoolBurnAndMint is CCIPReceiver, OwnerIsCreator {
     /// @notice Constructor initializes the contract with the router address.
     /// @param _router The address of the router contract.
     /// @param _link The address of the link contract.
-    constructor(address _router, address _link, address wnftAddr) CCIPReceiver(_router) {
+    constructor(
+        address _router,
+        address _link,
+        address wnftAddr
+    ) CCIPReceiver(_router) {
         s_linkToken = IERC20(_link);
         wnft = WrappedMyToken(wnftAddr);
     }
-
 
     /// @dev Modifier that checks the receiver address is not 0.
     /// @param _receiver The receiver address.
@@ -72,25 +72,30 @@ contract NFTPoolBurnAndMint is CCIPReceiver, OwnerIsCreator {
     }
 
     function burnAndSendNFT(
-        uint256 tokenId, 
+        uint256 tokenId,
         address newOwner,
         uint64 chainSelector,
-        address receiver)
-        public returns (bytes32){
-    // transfer NFT to this address to lock the NFT
-    //msg.sender: nft 合约持有人
-    // address: nft 转移到哪里 ，接收者即NFTPool中
-    // tokenId: 转移哪个NFT
-    wnft.transferFrom(msg.sender,address(this),tokenId);
-    //burn the wnft before send to ccip
-    wnft.burn(tokenId);
+        address receiver
+    ) public returns (bytes32) {
+        // transfer NFT to this address to lock the NFT
+        //msg.sender: nft 合约持有人
+        // address: nft 转移到哪里 ，接收者即NFTPool中
+        // tokenId: 转移哪个NFT
+        wnft.transferFrom(msg.sender, address(this), tokenId);
+        //burn the wnft before send to ccip
+        wnft.burn(tokenId);
 
-    //send cross-chain message
-    // construct to be sent
-    bytes memory payLoad = abi.encode(tokenId,newOwner);
-    bytes32 messageId =  sendMessagePayLINK(chainSelector,receiver,payLoad);
-    return messageId;
-    } 
+        //send cross-chain message
+        // construct to be sent
+        bytes memory payLoad = abi.encode(tokenId, newOwner);
+        bytes32 messageId = sendMessagePayLINK(
+            chainSelector,
+            receiver,
+            payLoad
+        );
+        return messageId;
+    }
+
     /// @notice Sends data to receiver on the destination chain.
     /// @notice Pay for fees in LINK.
     /// @dev Assumes your contract has sufficient LINK.
@@ -102,13 +107,9 @@ contract NFTPoolBurnAndMint is CCIPReceiver, OwnerIsCreator {
         uint64 _destinationChainSelector,
         address _receiver,
         bytes memory _text
-    )
-        internal
-        returns (bytes32 messageId)
-    {
+    ) internal returns (bytes32 messageId) {
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
-
             _receiver,
             _text,
             address(s_linkToken)
@@ -143,22 +144,21 @@ contract NFTPoolBurnAndMint is CCIPReceiver, OwnerIsCreator {
         return messageId;
     }
 
-    
-
     /// handle a received message
     function _ccipReceive(
         Client.Any2EVMMessage memory any2EvmMessage
-    )
-        internal
-        override
-    {
+    ) internal override {
         // address newOwner, uint256 tokenId
-        RequestData memory requestData = abi.decode(any2EvmMessage.data, (RequestData));
-        uint256 tokenId = requestData.tokenId; // fetch the tokenId
-        address newOwner = requestData.newOwner; // fetch the newOwner
+        // RequestData memory requestData = abi.decode(any2EvmMessage.data, (RequestData));
+        // uint256 tokenId = requestData.tokenId; // fetch the tokenId
+        // address newOwner = requestData.newOwner; // fetch the newOwner
+        (uint256 tokenId, address newOwner) = abi.decode(
+            any2EvmMessage.data,
+            (uint256, address)
+        );
         wnft.mintTokenWithSpecificTokenId(newOwner, tokenId);
 
-        emit TokenMinted(tokenId,newOwner);
+        emit TokenMinted(tokenId, newOwner);
     }
 
     /// @notice Construct a CCIP message.
@@ -168,7 +168,6 @@ contract NFTPoolBurnAndMint is CCIPReceiver, OwnerIsCreator {
     /// @param _feeTokenAddress The address of the token used for fees. Set address(0) for native gas.
     /// @return Client.EVM2AnyMessage Returns an EVM2AnyMessage struct which contains information for sending a CCIP message.
     function _buildCCIPMessage(
-
         address _receiver,
         bytes memory _text,
         address _feeTokenAddress

@@ -6,7 +6,7 @@ module.exports= async({deployments,getNamedAccounts})=>{
 // address _router,address _link, address nftAddr
     const CCIPSimulatordeploment = await deployments.get("CCIPLocalSimulator");
     const CCIPSimulator  =  await ethers.getContractAt("CCIPLocalSimulator",CCIPSimulatordeploment.address); 
-    const config =await  CCIPSimulator.configuration();
+    const config = await CCIPSimulator.configuration();
     // const sourceRouter = config.sourceRouter_;
     // const chainSelector = config.chainSelector_;
     const destinationRouter = config.destinationRouter_;
@@ -20,7 +20,7 @@ module.exports= async({deployments,getNamedAccounts})=>{
         contract:"NFTPoolBurnAndMint",
         from: firstNameAccount,
         log: true,
-        args: [destinationRouter, linkTokenAddr,wnftAddr]
+        args: [destinationRouter, linkTokenAddr, wnftAddr]
     })
     log("NFTPoolBurnAndMint deployed successfully!");
 }
