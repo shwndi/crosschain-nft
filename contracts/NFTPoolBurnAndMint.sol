@@ -76,7 +76,7 @@ contract NFTPoolBurnAndMint is CCIPReceiver, OwnerIsCreator {
         address newOwner,
         uint64 chainSelector,
         address receiver
-    ) public returns (bytes32) {
+    ) public {
         // transfer NFT to this address to lock the NFT
         //msg.sender: nft 合约持有人
         // address: nft 转移到哪里 ，接收者即NFTPool中
@@ -88,12 +88,12 @@ contract NFTPoolBurnAndMint is CCIPReceiver, OwnerIsCreator {
         //send cross-chain message
         // construct to be sent
         bytes memory payLoad = abi.encode(tokenId, newOwner);
-        bytes32 messageId = sendMessagePayLINK(
+        sendMessagePayLINK(
             chainSelector,
             receiver,
             payLoad
         );
-        return messageId;
+
     }
 
     /// @notice Sends data to receiver on the destination chain.

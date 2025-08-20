@@ -2,7 +2,7 @@ module.exports =  async({getNamedAccounts,deployments})=>{
     const {firstNameAccount} = await getNamedAccounts();
     const {deploy,log} = deployments;
 
-    log("Deploying WWNFTNFT contract...");
+    log("Deploying WNFT contract...");
     await deploy("WrappedMyToken",{
         contract: "WrappedMyToken",
         from: firstNameAccount,
